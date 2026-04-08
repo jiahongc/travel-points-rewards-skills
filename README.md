@@ -80,6 +80,12 @@ mkdir -p ~/.agents/skills
 cp -R .agents/skills/travel-city ~/.agents/skills/travel-city
 ```
 
+### OpenClaw / ClawHub
+
+ClawHub listing:
+
+- [https://clawhub.ai/jiahongc/travel-city](https://clawhub.ai/jiahongc/travel-city)
+
 If your client is already pointed at this repository, you can also use the checked-in skill directories directly instead of copying them elsewhere.
 
 Repository layout:

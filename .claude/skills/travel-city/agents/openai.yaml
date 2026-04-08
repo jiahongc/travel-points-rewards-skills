@@ -1,0 +1,6 @@
+interface:
+  display_name: "Travel City Briefing"
+  short_description: "Comprehensive travel briefing for any city — climate, safety, food, flights, culture, and more."
+  default_prompt: "Use /travel-city to generate a travel briefing for the specified city."
+policy:
+  allow_implicit_invocation: true

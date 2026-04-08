@@ -1,7 +1,7 @@
 ---
 name: travel-city
-description: Generate a comprehensive city travel briefing with live research, including timing, neighborhoods, attractions, food, safety, transportation, and optional flight or points guidance. Trigger when the user asks for destination research, trip planning, or a city guide with optional month/season or origin city.
-metadata: { "openclaw": { "emoji": "🌍", "requires": { "env": ["BRAVE_API_KEY"], "bins": ["curl"] } } }
+description: Generate a comprehensive city travel briefing with live research, including timing, neighborhoods, attractions, food, safety, transportation, and optional flight or points guidance. Trigger when the user asks for destination research, trip planning, or a city guide with optional month, season, origin city, or PDF export.
+metadata: { "openclaw": { "emoji": "🌍", "requires": { "env": ["BRAVE_API_KEY"], "bins": ["curl", "gunzip", "python3"] } } }
 ---
 
 # /travel-city — City Travel Briefing
@@ -80,10 +80,10 @@ If the environment does not support file writing or command execution:
 - explain that PDF export is unavailable in the current environment
 - still return the full text briefing
 
-When generating the PDF inside this repo, use:
+When generating the PDF inside this repo, use the exporter script that lives at `scripts/export_travel_brief_pdf.py`:
 
 ```bash
-python scripts/export_travel_brief_pdf.py outputs/sydney-august-briefing.md outputs/sydney-august-briefing.pdf --title "Sydney in August"
+python3 scripts/export_travel_brief_pdf.py outputs/sydney-august-briefing.md outputs/sydney-august-briefing.pdf --title "Sydney in August"
 ```
 
 ## Output Format

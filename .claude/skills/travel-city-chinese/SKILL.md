@@ -47,6 +47,16 @@ metadata:
 
 ---
 
+## Step 1.5: Set Expectations
+
+在开始搜索之前，先输出一条简短的状态提示，让用户知道接下来会发生什么：
+
+> 正在研究 {city} 旅行信息，需要进行多轮搜索和整理，预计 1-2 分钟完成。请稍候…
+
+这条消息必须在**第一次搜索调用之前**输出。
+
+---
+
 ## Step 2: Research via Brave Search
 
 优先使用 Brave Search API 做实时研究，且它应当是**默认且必须优先尝试的检索方式**。整体研究阶段控制在 **45 秒左右**，最多 **8 次搜索**。
@@ -63,15 +73,31 @@ curl -s "https://api.search.brave.com/res/v1/web/search?q=QUERY" \
   -H "X-Subscription-Token: $BRAVE_API_KEY"
 ```
 
-### 搜索节奏
+### 搜索节奏 — 并行优先
 
-1. 先搜目的地总览
-2. 先打开官方旅游局、官方签证/入境页、最强二级来源
-3. 间隔 **2 到 5 秒**
-4. 再搜天气 / 景点 / 活动 / 机票等高优先级主题
-5. 若遇到 **429**，等待 **8 到 15 秒** 后重试一次
-6. 如果仍失败，继续输出，但在 `## 📋 信息可信度说明` 中明确说明
-7. 如果改用其他实时搜索方式，必须写明 Brave 未能使用的原因，以及实际使用的替代搜索方式
+**核心原则：尽量并行发起搜索，减少总等待时间。**
+
+将 8 次搜索分为 **3 批并行组**，每批内的搜索同时发起（使用多个并行 Bash 工具调用）：
+
+**第 1 批（同时发起）：**
+- 目的地总览
+- 天气/气候
+- 景点/活动
+
+**第 2 批（同时发起）：**
+- 美食
+- 节庆/活动
+- 机票价格（如有出发地）
+
+**第 3 批（同时发起）：**
+- 里程/积分（如有出发地）
+- 中文查询（攻略/签证/美食）
+
+批次间无需人为延迟，直接连续发起。仅在以下情况需要等待：
+
+1. 若遇到 **429**，等待 **8 到 15 秒** 后重试一次
+2. 如果仍失败，继续输出，但在 `## 📋 信息可信度说明` 中明确说明
+3. 如果改用其他实时搜索方式，必须写明 Brave 未能使用的原因，以及实际使用的替代搜索方式
 
 ### Query Plan
 
@@ -155,6 +181,7 @@ curl -s "https://api.search.brave.com/res/v1/web/search?q=QUERY" \
 ## 🏘️ 推荐片区与周边
 
 - 重点片区 / 街区，**每个 2-3 句**
+- 每个片区名称附带 [Google Maps 链接](https://www.google.com/maps/place/PLACE+NAME)
 - 1-2 小时内可顺带去的小城 / 小镇
 - 哪些片区适合预算、夜生活、文化、第一次去的人
 
@@ -163,6 +190,7 @@ curl -s "https://api.search.brave.com/res/v1/web/search?q=QUERY" \
 - 10-15 个景点 / 体验，编号列表
 - 兼顾经典地标、冷门片区、小众本地体验
 - 写明大致时长与价格
+- 每个景点附带 [Google Maps 链接](https://www.google.com/maps/place/PLACE+NAME)
 - 至少包含 1 个低预算 / 免费项，1 个适合晚上去的项目
 
 ## 🎉 热门活动
@@ -177,6 +205,7 @@ curl -s "https://api.search.brave.com/res/v1/web/search?q=QUERY" \
 - 餐饮习惯、推荐片区 / 市场
 - 至少包含：经典本地菜、预算友好选项、甜点 / 饮品 / 小吃
 - 写清价格区间和小费习惯
+- 推荐具体餐厅时附带 [Google Maps 链接](https://www.google.com/maps/place/PLACE+NAME)
 
 ## 🎌 文化习惯
 
@@ -250,5 +279,8 @@ curl -s "https://api.search.brave.com/res/v1/web/search?q=QUERY" \
 - 价格格式：本币在前，美元在后，例如 `NOK 200（约 $19 美元）`
 - 温度格式：华氏在前，摄氏在后，例如 `85°F（29°C）`
 - 距离格式：英里在前，公里在后，例如 `15 英里（24 公里）`
-- Google Maps 链接使用命名超链接
+- Google Maps 链接使用命名超链接，格式为：`[地名](https://www.google.com/maps/place/Place+Name)`
+  - 示例：`[千禧公园（Millennium Park）](https://www.google.com/maps/place/Millennium+Park,+Chicago)`
+  - 需要添加 Google Maps 链接的位置：片区/街区名、景点、推荐餐厅、机场、车站等具体地点
+  - 不需要链接的：菜名、交通卡名、活动/节庆名
 - 结尾停在 `Sources`

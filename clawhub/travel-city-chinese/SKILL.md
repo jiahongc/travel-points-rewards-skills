@@ -21,6 +21,14 @@ metadata: { "openclaw": { "emoji": "🌏", "requires": { "env": ["BRAVE_API_KEY"
 如果城市缺失或有歧义，先向用户确认。
 如果目的地不在美国，且用户没有特别说明国籍，默认同时写出**美国护照**与**中国护照**的入境/签证要求。
 
+## Step 1.5: Set Expectations
+
+在开始搜索之前，先输出一条简短的状态提示：
+
+> 正在研究 {city} 旅行信息，需要进行多轮搜索和整理，预计 1-2 分钟完成。请稍候…
+
+这条消息必须在**第一次搜索调用之前**输出。
+
 ## Step 2: Research
 
 优先使用 Brave Search API 做实时研究，且它应当是**默认且必须优先尝试的检索方式**，最多 8 次搜索。
@@ -36,6 +44,16 @@ curl -s "https://api.search.brave.com/res/v1/web/search?q=QUERY" \
   -H "Accept: application/json" \
   -H "X-Subscription-Token: $BRAVE_API_KEY"
 ```
+
+### 搜索节奏 — 并行优先
+
+**尽量并行发起搜索，减少总等待时间。** 将搜索分为 3 批并行组，每批内同时发起：
+
+**第 1 批：** 目的地总览 + 天气/气候 + 景点/活动
+**第 2 批：** 美食 + 节庆/活动 + 机票价格（如有出发地）
+**第 3 批：** 里程/积分（如有出发地） + 中文查询
+
+批次间无需人为延迟。仅在遇到 429 时等待 8-15 秒后重试一次。
 
 优先搜索：
 
@@ -98,6 +116,7 @@ curl -s "https://api.search.brave.com/res/v1/web/search?q=QUERY" \
 ## 🏘️ 推荐片区与周边
 
 - 重点片区 / 街区，**每个 2-3 句**
+- 每个片区名称附带 [Google Maps 链接](https://www.google.com/maps/place/PLACE+NAME)
 - 1-2 小时内可顺带去的小城 / 小镇
 - 哪些片区适合预算、夜生活、文化、第一次去的人
 
@@ -106,6 +125,7 @@ curl -s "https://api.search.brave.com/res/v1/web/search?q=QUERY" \
 - 10-15 个景点 / 体验，编号列表
 - 兼顾经典地标、冷门片区、小众本地体验
 - 写明大致时长与价格
+- 每个景点附带 [Google Maps 链接](https://www.google.com/maps/place/PLACE+NAME)
 - 至少包含 1 个低预算 / 免费项，1 个适合晚上去的项目
 
 ## 🎉 热门活动
@@ -120,6 +140,7 @@ curl -s "https://api.search.brave.com/res/v1/web/search?q=QUERY" \
 - 餐饮习惯、推荐片区 / 市场
 - 至少包含：经典本地菜、预算友好选项、甜点 / 饮品 / 小吃
 - 写清价格区间和小费习惯
+- 推荐具体餐厅时附带 [Google Maps 链接](https://www.google.com/maps/place/PLACE+NAME)
 
 ## 🎌 文化习惯
 
@@ -188,5 +209,7 @@ curl -s "https://api.search.brave.com/res/v1/web/search?q=QUERY" \
 - 价格写成 `NOK 200（约 $19 美元）`
 - 温度写成 `85°F（29°C）`
 - 距离写成 `15 英里（24 公里）`
-- 使用命名超链接
+- Google Maps 链接使用命名超链接，格式为：`[地名](https://www.google.com/maps/place/Place+Name)`
+  - 需要添加链接的：片区/街区名、景点、推荐餐厅、机场、车站
+  - 不需要链接的：菜名、交通卡名、活动/节庆名
 - 结尾停在 `Sources`

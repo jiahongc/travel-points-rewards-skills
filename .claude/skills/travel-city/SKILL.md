@@ -42,6 +42,16 @@ If `city` is missing or ambiguous, use AskUserQuestion to clarify.
 
 ---
 
+## Step 1.5: Set Expectations
+
+Before starting any search, output a brief status message so the user knows what to expect:
+
+> Researching {city} travel information — this involves multiple searches and will take about 1-2 minutes. Hang tight...
+
+This message must appear **before the first search call**.
+
+---
+
 ## Step 2: Research via Brave Search
 
 Use Brave Search API as the **required first-choice search method** for all research. Target **~45 seconds total** for the research phase.
@@ -59,6 +69,26 @@ curl -s "https://api.search.brave.com/res/v1/web/search?q=QUERY" \
   -H "Accept: application/json" \
   -H "X-Subscription-Token: $BRAVE_API_KEY"
 ```
+
+### Search Strategy — Parallel First
+
+**Maximize parallelism to reduce total wait time.** Batch searches into 2-3 parallel groups using multiple simultaneous Bash tool calls:
+
+**Batch 1 (simultaneous):**
+- City overview
+- Weather/climate
+- Attractions
+
+**Batch 2 (simultaneous):**
+- Food/cuisine
+- Events/festivals
+- Flight prices (if travel_from provided)
+
+**Batch 3 (simultaneous):**
+- Points/miles (if travel_from provided)
+- Safety advisory
+
+No artificial delays between batches. Only pause if you hit a **429** rate limit (wait 8-15 seconds, retry once).
 
 ### Query Plan (run in priority order, skip lower-priority if budget exhausted)
 
@@ -130,13 +160,15 @@ content. Use bullet lists for unordered content. Keep paragraphs to 2-3 sentence
 ## 🏘️ Top Neighborhoods & Nearby Cities
 
 - Notable neighborhoods/districts — **2-3 sentences each** covering vibe, key activities, and who it's best for
-- Day-trip cities within 1-2 hours
+- Each neighborhood/district name must be a [named hyperlink](https://www.google.com/maps/search/...) to Google Maps
+- Day-trip cities within 1-2 hours (also with Google Maps links)
 - Where to stay for different traveler types (budget, luxury, nightlife, culture)
 
 ## 🎯 Things to Do
 
 - Top 10-15 attractions, experiences, and landmarks (numbered list)
 - Mix of iconic must-sees and lesser-known gems
+- Each attraction name must be a [named hyperlink](https://www.google.com/maps/search/...) to Google Maps
 - Include approximate visit duration and cost where known
 - Format prices in both local currency and USD: `¥1,500 (~$10 USD)`
 
@@ -207,14 +239,14 @@ Flag data freshness and uncertainty:
 
 ## 🔗 Sources
 
-List key sources used during research in terminal-safe format: `Name — URL`.
-Do not rely on Markdown named hyperlinks because some terminals do not render them.
+List key sources used during research. Use `Name — URL` format (plain text with full URL).
 Group by category. Example:
 
-- **Official:** GO TOKYO Official Travel Guide — https://www.gotokyo.org/en/, U.S. State Dept — Japan Advisory — https://travel.state.gov/...
-- **Travel guides:** Lonely Planet Tokyo — https://www.lonelyplanet.com/..., The Points Guy — Japan Miles — https://thepointsguy.com/...
-- **Reference:** Grokipedia Tokyo — https://grokipedia.com/...
-- **Flights:** Expedia JFK→NRT — https://www.expedia.com/..., KAYAK JFK→NRT — https://www.kayak.com/...
+- **Official:** GO TOKYO Official Travel Guide — https://www.gotokyo.org/en/
+- **Official:** U.S. State Dept Japan Advisory — https://travel.state.gov/...
+- **Travel guides:** Lonely Planet Tokyo — https://www.lonelyplanet.com/...
+- **Points/Miles:** The Points Guy — https://thepointsguy.com/...
+- **Flights:** Expedia JFK→NRT — https://www.expedia.com/...
 
 Only include sources that were actually consulted. Keep to ~8-12 links max.
 
@@ -235,5 +267,5 @@ Only include sources that were actually consulted. Keep to ~8-12 links max.
 - **Points/miles**: Program name + amount — `60k–80k United MileagePlus miles RT`
 - **Time-sensitive data**: Mark with `(as of Month YYYY)`
 - **Paragraphs**: 2-3 sentences max
-- **Google Maps URLs**: For every named location, include a plain Google Maps search URL in terminal-safe format: `Sensō-ji Temple — https://www.google.com/maps/search/Sensoji+Temple+Tokyo+Japan`. Use `+` for spaces in the URL.
+- **Google Maps links**: For every named location (neighborhoods, attractions, restaurants, airports, stations), use a Markdown named hyperlink on the place name itself: `[Sensō-ji Temple](https://www.google.com/maps/search/Sensoji+Temple+Tokyo+Japan)`. Use `+` for spaces in the URL. Do NOT put bare URLs at the end of sentences.
 - **No trailing summary**: End with Sources section, not a recap

@@ -17,13 +17,17 @@ Extract these parameters from the user's message:
 | `city` | Yes | City name such as "Taipei" or "Tokyo" |
 | `season_month` | No | "in summer", "in March", "in December" |
 | `travel_from` | No | "from New York", "from JFK", "from LA" |
-| `export_pdf` | No | "export to PDF", "save as PDF" |
 
 If the city is missing or ambiguous, ask the user to clarify before continuing.
+If the destination city is outside the United States and the user does not specify nationality,
+assume the traveler is a **U.S. citizen** for entry and visa guidance. If the user specifies a
+different passport or nationality, research that country's entry requirements instead.
 
 ## Step 2: Research
 
-Use Brave Search for the research phase. Aim to finish research in about 45 seconds and use no more than 8 searches total.
+Use Brave Search as the **required first-choice search method** for the research phase. Aim to finish research in about 45 seconds and use no more than 8 searches total.
+
+Only use another live search method if Brave is unavailable, rate-limited, blocked, or clearly failing to return the needed results. If that happens, use the best live fallback search available in the user's environment rather than relying on stale model knowledge.
 
 Use a request pattern like:
 
@@ -67,25 +71,6 @@ Write the briefing using all of the sections below, in order.
 - If `travel_from` is not provided, skip `## ✈️ Getting There`
 - If `season_month` is provided, tailor timing, events, and transportation commentary to that window
 
-If `export_pdf` is requested and the environment supports writing files and running local commands:
-
-1. Generate the final briefing
-2. Save it as `outputs/<slug>.md`
-3. Generate `outputs/<slug>.pdf`
-4. Return the path to the created PDF
-
-If the environment does not support file writing or command execution:
-
-- do not claim the PDF was created
-- explain that PDF export is unavailable in the current environment
-- still return the full text briefing
-
-When generating the PDF inside this repo, use the exporter script that lives at `scripts/export_travel_brief_pdf.py`:
-
-```bash
-python3 scripts/export_travel_brief_pdf.py outputs/sydney-august-briefing.md outputs/sydney-august-briefing.pdf --title "Sydney in August"
-```
-
 ## Output Format
 
 Use these exact section headings with emojis. Use numbered lists for ordered items and bullet lists for unordered items. Keep paragraphs to 2-3 sentences.
@@ -94,6 +79,7 @@ Use these exact section headings with emojis. Use numbered lists for ordered ite
 
 - Population, country, language(s), currency, timezone
 - Brief intro covering what the city is known for and the overall vibe
+- If the destination is outside the U.S., include a brief entry/visa note assuming a **U.S. citizen** unless the user says otherwise
 - Format population as `9.7 million` or `850,000`
 - Format timezone as `UTC+9 (JST)`
 
@@ -120,8 +106,9 @@ Use these exact section headings with emojis. Use numbered lists for ordered ite
 ## 🎯 Things to Do
 
 - Top 10-15 attractions, experiences, and landmarks as a numbered list
-- Mix iconic sights with lesser-known options
+- Mix iconic sights, lesser-known options, and **2-4 niche local neighborhood picks**
 - Include approximate visit duration and cost when known
+- Include at least one lower-cost or free option and one evening-friendly option when possible
 - Format prices in both local currency and USD, such as `¥1,500 (~$10 USD)`
 
 ## 🎉 Popular Events
@@ -135,6 +122,8 @@ Use these exact section headings with emojis. Use numbered lists for ordered ite
 
 - Must-try dishes as a numbered list of 8-12 items
 - Food culture overview, meal times, and dining customs
+- Include a few local neighborhood or market recommendations for where the food scene is strongest
+- Include at least one classic local specialty, one budget-friendly option type, and one snack/dessert/drink specialty
 - Price ranges by category
 - Tipping norms
 - Format prices in both local currency and USD
@@ -176,6 +165,12 @@ Only include this section if `travel_from` is provided.
 - Tourist passes or transit cards
 - Intercity transportation if relevant
 
+## 🧭 First-Time Traveler Tips
+
+- 4-6 concise, practical tips for someone visiting the city for the first time
+- Prioritize mistakes to avoid, how much advance booking matters, whether a car is useful, and how to structure a short stay efficiently
+- Keep this section practical and decision-oriented, not generic
+
 ## 📋 Confidence Notes
 
 - **Confirmed:** items verified from official or primary sources
@@ -184,6 +179,8 @@ Only include this section if `travel_from` is provided.
 - **Stale data flags:** prices, exchange rates, schedules, and other quickly changing information
 - Include `Research conducted: {today's date}`
 - Include `Brave Search API calls used: {count}/8`
+- If Brave Search was not used, or was only partly used, include a formal note explaining why
+- If a fallback live search method was used, name it explicitly
 
 ## 🔗 Sources
 

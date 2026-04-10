@@ -37,7 +37,6 @@ Extract these parameters from the user's message:
 | `city`          | Yes      | City name (e.g., "Taipei", "Tokyo")        |
 | `season_month`  | No       | "in summer", "in March", "in December"     |
 | `travel_from`   | No       | "from New York", "from JFK", "from LA"     |
-| `export_pdf`    | No       | "export to PDF", "save as PDF"             |
 
 If `city` is missing or ambiguous, use AskUserQuestion to clarify.
 
@@ -45,8 +44,10 @@ If `city` is missing or ambiguous, use AskUserQuestion to clarify.
 
 ## Step 2: Research via Brave Search
 
-Use Brave Search API for all research. Target **~45 seconds total** for the research phase.
+Use Brave Search API as the **required first-choice search method** for all research. Target **~45 seconds total** for the research phase.
 Run up to **8 queries** max. Prioritize the most impactful queries first.
+
+Only use another live search method if Brave is unavailable, rate-limited, blocked, or clearly failing to return the needed results. If that happens, use the best live fallback search available in the user's environment rather than relying on stale model knowledge.
 
 ```bash
 # Template — replace variables before running
@@ -95,39 +96,6 @@ Use `grokipedia.com` as a secondary city-guide source for overview, history, nei
 Write the briefing using **all** of the following sections in order.
 If `travel_from` is NOT provided, skip section 10.
 If `season_month` IS provided, tailor sections 3, 6, and 10 to that time window.
-If `export_pdf` is requested and file writing is available, also save:
-
-1. A markdown copy of the final briefing
-2. A PDF generated from that markdown copy
-
-Use clear filenames derived from the city and timing, such as:
-
-- `outputs/sydney-august-briefing.md`
-- `outputs/sydney-august-briefing.pdf`
-
-When generating the PDF inside this repo, use:
-
-```bash
-python scripts/export_travel_brief_pdf.py outputs/sydney-august-briefing.md outputs/sydney-august-briefing.pdf --title "Sydney in August"
-```
-
-### PDF Export Behavior
-
-When the user asks to export as PDF, treat that as an action request, not just a formatting preference.
-
-If the environment supports writing files and running local commands:
-
-1. Generate the final briefing text
-2. Save the briefing as `outputs/<slug>.md`
-3. Run the PDF exporter to create `outputs/<slug>.pdf`
-4. In the final response, include the absolute or project-relative path to the PDF that was created
-
-If the environment does **not** support writing files or running commands:
-
-- Do **not** claim the PDF was created
-- Say clearly that PDF export is unavailable in the current environment
-- Still provide the full travel briefing in text
-- Optionally mention the exporter command the user can run locally
 
 ---
 
@@ -234,6 +202,8 @@ Flag data freshness and uncertainty:
 - **Stale data flags**: Note any data that may change rapidly (prices, exchange rates, political situations)
 - Include the date of research: `Research conducted: {today's date}`
 - Include: `Brave Search API calls used: {count}/8`
+- If Brave Search was not used, or was only partly used, include a formal note explaining why
+- If a fallback live search method was used, name it explicitly
 
 ## 🔗 Sources
 

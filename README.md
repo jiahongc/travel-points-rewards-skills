@@ -35,7 +35,7 @@ English:
 Chinese:
 
 ```text
-/travel-city-chinese Bergen in May from New York
+/travel-city-chinese Bergen
 ```
 
 Typical output includes:
@@ -94,8 +94,8 @@ cp -R .agents/skills/travel-city-chinese ~/.agents/skills/travel-city-chinese
 
 If your client is already pointed at this repository, you can use the checked-in skill directories directly:
 
-- `clawhub/travel-city`
-- `clawhub/travel-city-chinese`
+- [`clawhub/travel-city`](https://clawhub.ai/jiahongc/travel-city)
+- [`clawhub/travel-city-chinese`](https://clawhub.ai/jiahongc/travel-city-chinese)
 
 Repository layout:
 

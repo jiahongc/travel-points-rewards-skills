@@ -8,7 +8,6 @@ description: |
   Examples: "/travel-city Taipei", "/travel-city Tokyo in March",
   "/travel-city Barcelona from New York"
 allowed-tools:
-  - Bash
   - WebSearch
   - WebFetch
   - AskUserQuestion
@@ -53,24 +52,13 @@ This message must appear **before the first search call**.
 Use **live web search** as the primary research method for all research. Target **~45 seconds total** for the research phase.
 Run up to **8 queries** max. Prioritize the most impactful queries first.
 
-If `BRAVE_API_KEY` is available in the environment, prefer Brave Search API because it is fast and predictable. Otherwise, use the environment's built-in `WebSearch` / `WebFetch` tools or another live search method available to the user.
+Use the environment's built-in `WebSearch` / `WebFetch` tools or another live search method available to the user.
 
 Do not rely on stale model knowledge when live search is available. Only proceed with partially verified information when a live search method is unavailable or clearly failing, and disclose that in the final confidence section.
 
-```bash
-# Optional Brave template — use only if BRAVE_API_KEY is available
-curl -s "https://api.search.brave.com/res/v1/web/search?q=QUERY" \
-  -H "Accept: application/json" \
-  -H "Accept-Encoding: gzip" \
-  -H "X-Subscription-Token: $BRAVE_API_KEY" | gunzip 2>/dev/null || \
-curl -s "https://api.search.brave.com/res/v1/web/search?q=QUERY" \
-  -H "Accept: application/json" \
-  -H "X-Subscription-Token: $BRAVE_API_KEY"
-```
-
 ### Search Strategy — Parallel First
 
-**Maximize parallelism to reduce total wait time.** Batch searches into 2-3 parallel groups using multiple simultaneous Bash tool calls:
+**Maximize parallelism to reduce total wait time.** Batch searches into 2-3 parallel groups using multiple simultaneous search tool calls:
 
 **Batch 1 (simultaneous):**
 - City overview
@@ -108,14 +96,12 @@ No artificial delays between batches. Only pause if you hit a **429** rate limit
 
 **Secondary** (reputable travel content):
 - lonelyplanet.com, thepointsguy.com, skyscanner.com, google.com/travel
-- numbeo.com (cost of living), xe.com (currency), rome2rio.com (transit), grokipedia.com
+- numbeo.com (cost of living), xe.com (currency), rome2rio.com (transit)
 
 **Tertiary** (use only when primary/secondary lack coverage):
 - tripadvisor.com
 
 **Never use**: Reddit, X/Twitter, Facebook, Instagram, TikTok, Quora, Medium, personal blogs
-
-Use `grokipedia.com` as a secondary city-guide source for overview, history, neighborhoods, attractions, and general destination context. Do not use it for safety advisories, health guidance, flight pricing, points pricing, or official transportation details.
 
 ---
 
@@ -232,8 +218,6 @@ Flag data freshness and uncertainty:
 - **Stale data flags**: Note any data that may change rapidly (prices, exchange rates, political situations)
 - Include the date of research: `Research conducted: {today's date}`
 - Include: `Live search queries used: {count}/8`
-- If Brave Search API was used, also include: `Brave Search API calls used: {count}/8`
-- If Brave Search API was not used, or was only partly used, include a short note explaining which live search method was used instead
 - If a fallback live search method was used, name it explicitly
 
 ## 🔗 Sources

@@ -134,18 +134,18 @@ Notes:
 
 ## Setup
 
-For live research, set a Brave Search API key:
+For live research, you can optionally set a Brave Search API key:
 
 ```bash
 export BRAVE_API_KEY=your_key_here
 ```
 
-Get a key at [brave.com/search/api](https://brave.com/search/api/).
+Get a key at [brave.com/search/api](https://brave.com/search/api/). If you do not set one, OpenClaw-compatible runtimes can use their built-in live web search tools instead.
 
 You need:
 
-- network access for Brave Search
-- Python 3 if your client or workflow needs it for other tooling
+- network access for live web research
+- optional: `BRAVE_API_KEY`, `curl`, and `gunzip` if you want to prefer Brave Search API from the shell
 
 * * *
 

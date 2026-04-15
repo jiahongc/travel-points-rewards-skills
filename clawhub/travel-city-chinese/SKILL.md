@@ -1,7 +1,13 @@
 ---
 name: travel-city-chinese
+version: 1.0.0
 description: 生成完整的中文城市旅行简报，面向中文读者，默认输出简体中文，并同时覆盖美国护照与中国护照的签证/入境说明。
-metadata: { "openclaw": { "emoji": "🌏", "requires": { "env": ["BRAVE_API_KEY"], "bins": ["curl", "gunzip", "python3"] } } }
+allowed-tools:
+  - Bash
+  - WebSearch
+  - WebFetch
+  - AskUserQuestion
+metadata: { "openclaw": { "emoji": "🌏" } }
 ---
 
 # /travel-city-chinese — 中文城市旅行简报
@@ -31,11 +37,14 @@ metadata: { "openclaw": { "emoji": "🌏", "requires": { "env": ["BRAVE_API_KEY"
 
 ## Step 2: Research
 
-优先使用 Brave Search API 做实时研究，且它应当是**默认且必须优先尝试的检索方式**，最多 8 次搜索。
+优先使用**实时联网搜索**做研究，最多 8 次搜索。
 
-只有在 Brave 不可用、被限流、被拦截、认证失败，或明显无法返回所需结果时，才允许切换到用户当前环境里可用的其他实时搜索方式。发生切换时，不要依赖陈旧模型知识，必须在 `## 📋 信息可信度说明` 中正式说明原因。
+如果环境中存在 `BRAVE_API_KEY`，优先使用 Brave Search API，因为它通常更稳定、更可控。若没有该 key，则直接使用当前运行环境自带的 `WebSearch` / `WebFetch` 或其他可用的实时搜索方式。
+
+只要当前环境存在可用的实时搜索能力，就不要依赖陈旧模型知识。只有在实时搜索不可用、被限流、被拦截、认证失败，或明显无法返回所需结果时，才允许写入部分未完全核实的信息，并且必须在 `## 📋 信息可信度说明` 中正式说明原因。
 
 ```bash
+# 可选 Brave 模板：仅在环境中存在 BRAVE_API_KEY 时使用
 curl -s "https://api.search.brave.com/res/v1/web/search?q=QUERY" \
   -H "Accept: application/json" \
   -H "Accept-Encoding: gzip" \
@@ -190,8 +199,9 @@ curl -s "https://api.search.brave.com/res/v1/web/search?q=QUERY" \
 - **存在冲突**：不同来源说法不一致
 - **可能波动**：机票、汇率、政策、活动票价、开放时间等
 - 包含：`Research conducted: {today's date}`
-- 包含：`Brave Search API calls used: {count}/8`
-- 如果 Brave Search 没有使用，或只部分使用，必须正式说明原因
+- 包含：`Live search queries used: {count}/8`
+- 如果使用了 Brave Search API，再包含：`Brave Search API calls used: {count}/8`
+- 如果 Brave Search 没有使用，或只部分使用，必须正式说明改用的实时搜索方式名称
 - 如果使用了其他实时搜索方式，必须明确写出替代方式名称
 - 必须说明中国护照签证信息是依据：目的地官方 / 中国使领馆官方 / 两者共同核实
 

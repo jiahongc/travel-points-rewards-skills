@@ -52,15 +52,17 @@ This message must appear **before the first search call**.
 
 ---
 
-## Step 2: Research via Brave Search
+## Step 2: Research via Live Search
 
-Use Brave Search API as the **required first-choice search method** for all research. Target **~45 seconds total** for the research phase.
+Use **live web search** as the primary research method for all research. Target **~45 seconds total** for the research phase.
 Run up to **8 queries** max. Prioritize the most impactful queries first.
 
-Only use another live search method if Brave is unavailable, rate-limited, blocked, or clearly failing to return the needed results. If that happens, use the best live fallback search available in the user's environment rather than relying on stale model knowledge.
+If `BRAVE_API_KEY` is available in the environment, prefer Brave Search API because it is fast and predictable. Otherwise, use the environment's built-in live search tools or another live search method available to the user.
+
+Do not rely on stale model knowledge when live search is available. Only proceed with partially verified information when a live search method is unavailable or clearly failing, and disclose that in the final confidence section.
 
 ```bash
-# Template — replace variables before running
+# Optional Brave template — use only if BRAVE_API_KEY is available
 curl -s "https://api.search.brave.com/res/v1/web/search?q=QUERY" \
   -H "Accept: application/json" \
   -H "Accept-Encoding: gzip" \
@@ -233,8 +235,9 @@ Flag data freshness and uncertainty:
 - **Conflicting**: Items where sources disagreed — note the discrepancy
 - **Stale data flags**: Note any data that may change rapidly (prices, exchange rates, political situations)
 - Include the date of research: `Research conducted: {today's date}`
-- Include: `Brave Search API calls used: {count}/8`
-- If Brave Search was not used, or was only partly used, include a formal note explaining why
+- Include: `Live search queries used: {count}/8`
+- If Brave Search API was used, also include: `Brave Search API calls used: {count}/8`
+- If Brave Search API was not used, or was only partly used, include a short note explaining which live search method was used instead
 - If a fallback live search method was used, name it explicitly
 
 ## 🔗 Sources

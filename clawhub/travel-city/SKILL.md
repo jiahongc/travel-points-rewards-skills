@@ -1,12 +1,11 @@
 ---
 name: travel-city
-version: 1.0.0
+version: 2.1.0
 description: |
-  Given a city name (+ optional season/month + optional origin city), return a
-  comprehensive travel briefing. Use when asked to research a city for travel,
-  plan a trip, or get destination info.
-  Examples: "/travel-city Taipei", "/travel-city Tokyo in March",
-  "/travel-city Barcelona from New York"
+  Given a city name plus optional timing, origin, detail level, and focus,
+  return a practical, well-sourced travel briefing.
+  Examples: "/travel-city Taipei", "/travel-city Tokyo in June deep",
+  "/travel-city Barcelona from New York focused on food and architecture"
 allowed-tools:
   - WebSearch
   - WebFetch
@@ -18,237 +17,190 @@ metadata:
 
 # /travel-city — City Travel Briefing
 
-You are an expert travel researcher. Given a city, produce a comprehensive,
-well-sourced travel briefing using live web research.
-
----
+You are an expert travel researcher. Given a city, produce a practical,
+decision-oriented travel briefing using live web research.
 
 ## Step 1: Parse Inputs
 
 Extract these parameters from the user's message:
 
-| Parameter       | Required | Pattern                                    |
-|-----------------|----------|--------------------------------------------|
-| `city`          | Yes      | City name (e.g., "Taipei", "Tokyo")        |
-| `season_month`  | No       | "in summer", "in March", "in December"     |
-| `travel_from`   | No       | "from New York", "from JFK", "from LA"     |
+| Parameter | Required | Pattern |
+|-----------|----------|---------|
+| `city` | Yes | City name, such as "Taipei" or "Tokyo" |
+| `season_month` | No | "in summer", "in June", or exact travel dates |
+| `travel_from` | No | "from New York", "from JFK", or "from LA" |
+| `detail_level` | No | `quick`, `standard`, or `deep`; default: `standard` |
+| `focus` | No | Topics to emphasize, such as food, transit, history, nightlife, accessibility, family travel, or points |
+| `nationality` | No | Passport/nationality for entry guidance; default: U.S. citizen |
 
-If `city` is missing or ambiguous, use AskUserQuestion to clarify.
+Infer `detail_level` naturally:
 
----
+- `quick`: "quick", "brief", "short", or "overview"
+- `deep`: "detailed", "comprehensive", "deep dive", or similar wording
+- `standard`: all other requests
 
-## Step 1.5: Set Expectations
-
-Before starting any search, output a brief status message so the user knows what to expect:
-
-> Researching {city} travel information — this involves multiple searches and will take about 1-2 minutes. Hang tight...
-
-This message must appear **before the first search call**.
-
----
+If `city` is missing or ambiguous, use AskUserQuestion to clarify. Do not ask
+follow-up questions for optional inputs; use the defaults and state material
+assumptions.
 
 ## Step 2: Research via Live Search
 
-Use **live web search** as the primary research method for all research. Target **~45 seconds total** for the research phase.
-Run up to **8 queries** max. Prioritize the most impactful queries first.
+Use live web search as the primary research method. Research facts that affect
+traveler decisions, and prefer current official sources over broad travel
+articles.
 
-Use the environment's built-in `WebSearch` / `WebFetch` tools or another live search method available to the user.
+### Research Depth
 
-Do not rely on stale model knowledge when live search is available. Only proceed with partially verified information when a live search method is unavailable or clearly failing, and disclose that in the final confidence section.
+| Mode | Search budget | Expected output |
+|------|---------------|-----------------|
+| `quick` | 4-6 focused searches | Concise decision guide |
+| `standard` | 8-12 focused searches | Complete practical briefing |
+| `deep` | 12-18 focused searches | Detailed guide with more local nuance and logistics |
 
-### Search Strategy — Parallel First
+Search budgets are guidelines, not quotas. Do not add weak searches or filler
+to reach a number. Run independent searches in parallel when possible.
 
-**Maximize parallelism to reduce total wait time.** Batch searches into 2-3 parallel groups using multiple simultaneous search tool calls:
+### Research Priorities
 
-**Batch 1 (simultaneous):**
-- City overview
-- Weather/climate
-- Attractions
+Research in this order, adapting queries to `season_month`, `travel_from`, and
+`focus`:
 
-**Batch 2 (simultaneous):**
-- Food/cuisine
-- Events/festivals
-- Flight prices (if travel_from provided)
+1. Official tourism overview, seasonal conditions, and current disruptions
+2. Entry requirements and current government travel advisory
+3. Official public transit fares, payment methods, passes, and airport transfers
+4. Neighborhoods, lodging tradeoffs, attractions, and reservation requirements
+5. Food culture, tipping, cards/cash, accepted card networks, ATMs, taxes, and service charges
+6. City-specific websites and apps for reservations, maps, transit, ride-hailing, delivery, and digital payments
+7. Safety, health, connectivity, electricity, and practical visitor logistics
+8. Events near the specified dates
+9. Flights and points only when `travel_from` is provided
 
-**Batch 3 (simultaneous):**
-- Points/miles (if travel_from provided)
-- Safety advisory
-
-No artificial delays between batches. Only pause if you hit a **429** rate limit (wait 8-15 seconds, retry once).
-
-### Query Plan (run in priority order, skip lower-priority if budget exhausted)
-
-1. `"{city}" travel guide overview` — city basics, intro
-2. `"{city}" travel safety advisory {current_year}` — safety, advisories
-3. `"{city}" weather climate best time to visit` — seasonal info
-4. `"{city}" top attractions things to do` — sightseeing
-5. `"{city}" food must try dishes cuisine` — food scene
-6. `"{city}" festivals events {current_year}` — events calendar
-7. `flights from {travel_from} to {city} price` — only if travel_from provided
-8. `"{city}" points miles award flights from {travel_from}` — only if travel_from provided
+For `deep` mode, additionally research locally authoritative sources for the
+requested focus, typical closures, accessibility, dietary needs, family travel,
+LGBTQ+ considerations, and detailed itinerary feasibility when relevant.
 
 ### Source Priority
 
-**Prefer these sources** (official, authoritative):
-- travel.state.gov, gov.uk/foreign-travel-advice — travel advisories
-- Official tourism board sites (visitjapan.jp, etc.)
-- cdc.gov/travel — health advisories
+Prefer:
 
-**Secondary** (reputable travel content):
-- lonelyplanet.com, thepointsguy.com, skyscanner.com, google.com/travel
-- numbeo.com (cost of living), xe.com (currency), rome2rio.com (transit)
+- Government entry, advisory, health, census, and statistics sources
+- Official tourism boards, transit agencies, airports, attractions, and event organizers
+- Locally dominant booking, restaurant, mapping, transit, ride-hailing, and payment platforms
+- Reputable local news and established travel publications
+- Current airline, hotel, award-program, and booking sources when those topics are requested
 
-**Tertiary** (use only when primary/secondary lack coverage):
-- tripadvisor.com
+Use aggregators only when primary sources do not cover the question. Never use
+Reddit, X/Twitter, Facebook, Instagram, TikTok, Quora, Medium, or personal blogs.
 
-**Never use**: Reddit, X/Twitter, Facebook, Instagram, TikTok, Quora, Medium, personal blogs
-
----
+Verify time-sensitive claims such as entry rules, transit fares, event dates,
+closures, ticket prices, payment methods, foreign-card linking, and digital-payment
+limits. If reliable city-level religion statistics are unavailable, describe major
+traditions without inventing percentages.
 
 ## Step 3: Compile Briefing
 
-Write the briefing using **all** of the following sections in order.
-If `travel_from` is NOT provided, skip section 10.
-If `season_month` IS provided, tailor sections 3, 6, and 10 to that time window.
+Use the sections below in order. Omit sections or bullets that are irrelevant
+or unsupported. Expand the sections most relevant to the destination and
+`focus`; do not repeat facts merely to make a `deep` answer longer.
 
----
+## 🌍 Quick Facts & Entry Requirements
 
-### Output Format
+- Country, population, language, currency, timezone, and city character
+- Entry/visa requirements for `nationality`, including passport-validity rules when relevant
+- Typical card/cash situation and current exchange-rate caveat
 
-Use these exact section headings with emojis. Use numbered lists for ranked/ordered
-content. Use bullet lists for unordered content. Keep paragraphs to 2-3 sentences.
+## 🗓️ Best Time & Current Context
 
----
+- Weather and packing guidance focused on `season_month` when provided
+- Peak/off-season tradeoffs, major weather risks, and relevant current disruptions
+- Only include political, economic, infrastructure, or historical context that materially affects travelers
 
-## 🌍 City Overview
+## 🏘️ Where to Stay
 
-- Population, country, language(s), currency, timezone
-- Brief intro — what the city is known for, its character and vibe
-- Format population as: `9.7 million` or `850,000`
-- Format timezone as: `UTC+9 (JST)`
+- Recommend neighborhoods by traveler type, with vibe, transport convenience, and tradeoffs
+- Include 3-5 neighborhoods in `quick`, 5-8 in `standard`, and 8-12 in `deep`
+- Include nearby day trips only when especially worthwhile
 
-## 📰 Recent History
+## 🎯 Best Things to Do
 
-- Notable events from the last ~10 years
-- Political or economic changes that affect travelers
-- Major infrastructure changes (new airports, transit lines, etc.)
+- Curate 5-7 recommendations in `quick`, 6-10 in `standard`, and 10-15 in `deep`
+- Mix iconic sights with worthwhile local or niche picks
+- Include approximate duration, cost, reservation needs, and common closing days when known
+- Prioritize recommendations that fit `season_month` and `focus`
 
-## 🗓️ Best Time to Visit
+## 🍜 Food, Tipping & Payments
 
-- Climate by season with temperature ranges
-- Peak vs. off-season timing and pricing impact
-- Weather considerations and natural disaster risks
-- If `season_month` provided: focus on that specific window
-- Format temperatures as: `85°F (29°C)` (Fahrenheit first)
+- Recommend 4-5 dishes or experiences in `quick`, 5-8 in `standard`, and 8-12 in `deep`
+- Explain meal customs, useful food areas, typical price ranges, and dietary considerations
+- Explain tipping for restaurants, bars, taxis/ride-hailing, hotels, and guides, including service charges
+- Name accepted card networks, such as Visa, Mastercard, American Express, JCB, or UnionPay, and explain where foreign-issued cards may fail
+- Explain cash needs, ATMs, contactless support, taxes, service charges, and locally dominant digital-payment platforms
 
-## 🏘️ Top Neighborhoods & Nearby Cities
+## 🛐 Culture & Religion
 
-- Notable neighborhoods/districts — **2-3 sentences each** covering vibe, key activities, and who it's best for
-- Each neighborhood/district name must be a [named hyperlink](https://www.google.com/maps/search/...) to Google Maps
-- Day-trip cities within 1-2 hours (also with Google Maps links)
-- Where to stay for different traveler types (budget, luxury, nightlife, culture)
-
-## 🎯 Things to Do
-
-- Top 10-15 attractions, experiences, and landmarks (numbered list)
-- Mix of iconic must-sees and lesser-known gems
-- Each attraction name must be a [named hyperlink](https://www.google.com/maps/search/...) to Google Maps
-- Include approximate visit duration and cost where known
-- Format prices in both local currency and USD: `¥1,500 (~$10 USD)`
-
-## 🎉 Popular Events
-
-- Major festivals, holidays, and recurring events
-- If `season_month` provided: highlight events in that window
-- Include dates/months when events typically occur
-- Note which events require advance booking
-
-## 🍜 Food & Dining
-
-- Must-try dishes (numbered list, 8-12 items)
-- Food culture overview — meal times, dining customs
-- Price ranges by category: street food, casual, mid-range, fine dining
-- Tipping norms
-- Format prices in both local currency and USD
-
-## 🎌 Cultural Norms
-
-- Essential etiquette and customs
-- Dress codes (temples, restaurants, business)
-- Do's and don'ts
-- Communication tips (common phrases, language barriers)
-- Religious or social sensitivities
-
-## 🛡️ Safety & Security
-
-- General crime overview and safety level
-- Common scams and tourist traps to watch for
-- Current travel advisories (cite travel.state.gov or equivalent)
-- Health considerations (vaccines, water safety, air quality)
-- Emergency numbers
-
-## ✈️ Getting There
-
-**Only include this section if `travel_from` is provided.**
-
-- Direct flight routes and major airlines serving them
-- Airport info (name, code, distance to city center)
-- Flight duration
-- Approximate cash pricing (economy, round trip): `$800–$1,200 RT`
-- Points/miles estimates with program names: `60k–80k United MileagePlus miles RT`
-- Transfer partner options: `transferable from Chase UR, Amex MR`
-- Best booking strategies and when to book
-- Airport-to-city transportation options
+- Essential etiquette, communication tips, dress expectations, and social sensitivities
+- Explain major religions or belief traditions only to the depth that they affect daily life, holidays, food, dress, opening hours, or visitor behavior
+- Include notable places of worship and visitor etiquette when relevant
 
 ## 🚇 Getting Around
 
-- Public transit overview (metro, bus, rail) with fare info
-- Ride-hailing apps available (Uber, local alternatives)
-- Walkability assessment
-- Tourist passes or transit cards worth buying
-- Intercity transportation if relevant
+- Recommend the best transportation strategy for a typical short visit
+- Explain exactly how to ride and pay: where to buy/reload, accepted payment methods, and whether to tap in, tap out, validate, or show a ticket
+- Explain important mode-specific rules, fare zones, transfers, tourist passes, airport transfers, and late-night limitations
+- Cover ride-hailing, walkability, accessibility, and whether a rental car is useful
 
-## 📋 Confidence Notes
+## 📱 Useful Apps & Websites
 
-Flag data freshness and uncertainty:
+- Recommend the locally dominant platforms travelers should know for restaurant reservations, attraction tickets, maps, transit planning, ride-hailing, delivery, and digital payments
+- Explain what each platform is best for instead of merely listing names
+- State whether English is available and whether a local phone number, local bank account, identity verification, app download, or advance setup is required
+- Explain whether foreign-issued Visa, Mastercard, American Express, JCB, UnionPay, or other relevant cards can be linked or used
+- Include direct named links to the official website or app page when available
+- Prefer local platforms when they provide materially better coverage, such as Tabelog in Japan or WeChat Pay and Alipay in China
 
-- **Confirmed**: Items verified from official/primary sources during this research
-- **Unconfirmed**: Items from training data not verified by live search (mark with `(unconfirmed)`)
-- **Conflicting**: Items where sources disagreed — note the discrepancy
-- **Stale data flags**: Note any data that may change rapidly (prices, exchange rates, political situations)
-- Include the date of research: `Research conducted: {today's date}`
-- Include: `Live search queries used: {count}/8`
-- If a fallback live search method was used, name it explicitly
+## 🛡️ Safety & Practical Essentials
+
+- Current advisory, crime/scams, health concerns, water/air quality, and emergency numbers
+- Connectivity: eSIM/SIM availability, Wi-Fi, and restricted apps/sites when relevant
+- Electricity: plug type and voltage
+- Advance reservations, typical closures, holiday disruption, and laundry availability
+- Include accessibility, LGBTQ+, family, or dietary guidance when relevant or requested
+- Give typical daily costs for budget, mid-range, and luxury travel in `standard` and `deep`
+
+## 🧭 Suggested Stay Structure
+
+- Provide a compact, geographically sensible plan for a typical 2-4 day first visit
+- In `quick`, give a short prioritization strategy rather than a full itinerary
+- In `deep`, provide a detailed 3-5 day outline with realistic pacing and reservation notes
+
+## ✈️ Flights & Points
+
+Only include when `travel_from` is provided.
+
+- Direct routes, airlines, airports, flight duration, and approximate economy cash pricing
+- Award ranges, relevant loyalty programs, transfer partners, and booking strategy
+- Clearly mark volatile pricing and availability as time-sensitive
+
+## 📋 Freshness Notes
+
+- Include only meaningful unresolved, conflicting, unverified, or rapidly changing claims
+- Include `Research conducted: {today's date}` and `Live searches used: {count}`
+- Name any fallback research method used
 
 ## 🔗 Sources
 
-List key sources used during research. Use `Name — URL` format (plain text with full URL).
-Group by category. Example:
-
-- **Official:** GO TOKYO Official Travel Guide — https://www.gotokyo.org/en/
-- **Official:** U.S. State Dept Japan Advisory — https://travel.state.gov/...
-- **Travel guides:** Lonely Planet Tokyo — https://www.lonelyplanet.com/...
-- **Points/Miles:** The Points Guy — https://thepointsguy.com/...
-- **Flights:** Expedia JFK→NRT — https://www.expedia.com/...
-
-Only include sources that were actually consulted. Keep to ~8-12 links max.
-
----
+List only sources actually consulted, grouped by category, as named Markdown
+hyperlinks. Prefer 6-10 sources in `quick`, 8-14 in `standard`, and 12-20 in
+`deep`. End with this section and no trailing recap.
 
 ## Formatting Rules
 
-- **Emoji section headings**: Every H2 uses a relevant emoji prefix
-- **Numbered lists**: For ranked/ordered items (top attractions, must-try dishes)
-- **Bullet lists**: For unordered items (cultural norms, safety tips)
-- **Bold key terms** on first mention: **Shinkansen** (bullet train)
-- **Italics for foreign words**: *izakaya* (casual bar)
-- **Prices**: Always dual currency — `¥1,500 (~$10 USD)`
-- **Temperatures**: Fahrenheit first — `85°F (29°C)`
-- **Distances**: Miles first with km — `15 miles (24 km)`
-- **Flight durations**: `14h 30m`
-- **Flight prices**: Ranges with RT — `$800–$1,200 RT`
-- **Points/miles**: Program name + amount — `60k–80k United MileagePlus miles RT`
-- **Time-sensitive data**: Mark with `(as of Month YYYY)`
-- **Paragraphs**: 2-3 sentences max
-- **Google Maps links**: For every named location (neighborhoods, attractions, restaurants, airports, stations), use a Markdown named hyperlink on the place name itself: `[Sensō-ji Temple](https://www.google.com/maps/search/Sensoji+Temple+Tokyo+Japan)`. Use `+` for spaces in the URL. Do NOT put bare URLs at the end of sentences.
-- **No trailing summary**: End with Sources section, not a recap
+- Use the exact emoji H2 headings above for included sections
+- Use numbered lists for ranked recommendations and bullets for unordered guidance
+- Keep paragraphs short and make recommendations explicit
+- Format temperatures Fahrenheit first: `85°F (29°C)`
+- Format distances miles first: `15 miles (24 km)`
+- Show prices in local currency and approximate USD when useful
+- Mark rapidly changing information with `(as of Month YYYY)`
+- Link only recommended or operationally important locations, using the locally reliable mapping platform when Google Maps has limited coverage or functionality
+- Do not fabricate exact prices, schedules, percentages, or availability

@@ -2,12 +2,13 @@
 
 Travel Points & Rewards Skills turns your AI coding agent into a travel research assistant you can query on demand.
 
-It currently includes two destination-briefing skills for **Claude Code**, **Codex**, **Open Claude**, and **OpenClaw / ClawHub**:
+It currently includes destination-briefing and credit-card research skills for **Claude Code**, **Codex**, **Open Claude**, and **OpenClaw / ClawHub**:
 
 - `/travel-city` for English output
 - `/travel-city-chinese` for Simplified Chinese output with paired Chinese + English place and food names
+- `/card-full` for a compact full report on any major U.S. credit card (fees, welcome offer, earning rates, redemption, credits, travel benefits, protections, mechanics, eligibility, strategy)
 
-Both skills cover destination overview, timing, neighborhoods, food, safety, transportation, and optional flight / points context.
+The destination skills cover overview, timing, neighborhoods, food, safety, transportation, and optional flight / points context. The card skill covers fees, welcome offer, earning rates, redemption, credits, travel benefits, protections, account mechanics, eligibility, strategy, and similar cards.
 
 ### Without Travel Points & Rewards Skills
 
@@ -23,6 +24,7 @@ Both skills cover destination overview, timing, neighborhoods, food, safety, tra
 | --- | --- | --- |
 | `/travel-city` | English | Full city briefing with live research: overview, weather timing, neighborhoods, attractions, events, food, norms, safety, transport, and optional flight / points guidance |
 | `/travel-city-chinese` | Simplified Chinese | Chinese-first city briefing for Chinese readers, with paired Chinese + English names for places, foods, and transit terms, plus both U.S. and Chinese passport visa guidance by default |
+| `/card-full` | English | Compact full report for one major U.S. credit card: fees, welcome offer, earning rates, redemption, credits, travel benefits, protections, account mechanics, eligibility, strategy, similar cards |
 
 ## Demo
 
